@@ -1,0 +1,9 @@
+{
+  "maxPool": 100,
+  "hostPerDp": 5,
+  "controller": "127.0.0.1",
+  "date": "20230215-100414",
+  "netBuildTime": "1.328 sec",
+  "dpNum": 5,
+  "ruleNumPerDp": 38
+}
