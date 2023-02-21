@@ -135,6 +135,11 @@ def addNode(net, idx):
             hostIp += hostPerDp * (distId-1) * int(distDpNum/distNodeNum)
         dpHostList.append(net.addHost('h%d' % hostId, ip=int2Ip(hostIp)))
         hostId += 1
+
+    for host in dpHostList:
+        host.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
+        host.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
+        host.cmd("sysctl -w net.ipv6.conf.lo.disable_ipv6=1")
     hostList[idx] = dpHostList
 
 # Link worker
