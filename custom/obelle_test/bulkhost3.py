@@ -150,9 +150,9 @@ def addLink(net, idx):
 # Ping worker
 def pingHost(net, hosts):
     for i, host in enumerate(hosts):
-	    if i+1 == len(hosts):
-		    break
-	    net.ping([hosts[i], hosts[i+1]])
+        if i+1 == len(hosts):
+            break
+        net.ping([hosts[i], hosts[i+1]])
 
 # Iperf worker
 def iperfHost(net, hosts, duration, bandwidth):
@@ -162,14 +162,17 @@ def iperfHost(net, hosts, duration, bandwidth):
     except Exception as e:
         print(e)
 
-def writeStat(netBuildTime, totalRuleNum):
+def writeStat(netBuildTime, hostRegistationTime, ruleInstallationTime, totalRuleNum):
     statData = {}
     timeNow = time.strftime('%Y%m%d-%H%M%S', time.localtime()) 
     statData['date'] = timeNow
     statData['controller'] = ctrlIp
     statData['dpNum'] = dpNum
     statData['hostPerDp'] = hostPerDp
+    statData['host'] = "%.3f sec" % netBuildTime 
     statData['netBuildTime'] = "%.3f sec" % netBuildTime 
+    statData['hostRegistationTime'] = "%.3f sec" % hostRegistationTime 
+    statData['ruleInstallationTime'] = "%.3f sec" % ruleInstallationTime 
     statData['maxPool'] = maxPool
     statData['ruleNumPerDp'] = totalRuleNum 
     with open('./test-stat/test_stat-%s.json' % timeNow, 'w') as f:
@@ -235,6 +238,8 @@ def myNetwork():
             info('*** %s hosts registered by OBelle-Access\n' % registeredHostNum)
             break
         time.sleep(3)
+    hostRegistationTime = time.time() - netBuildTime - start
+    info("*** Registering hosts took %.3f seconds\n" % (hostRegistationTime))
 
     totalRuleNum = baseRuleNum + hostRuleNum * hostPerDp
     info('*** Checking if %d rules installed on dps\n' % totalRuleNum)	
@@ -255,6 +260,8 @@ def myNetwork():
         else :
             info(" -> %d dps still lack rules\n" % notInstalledDpNum)
         time.sleep(6)
+    ruleInstallationTime = time.time() - hostRegistationTime - netBuildTime - start 
+    info("*** Synchronizing rules took %.3f seconds\n" % (ruleInstallationTime))
 
     # iperf
     if iperfEnable:
@@ -268,7 +275,7 @@ def myNetwork():
     
     # write stat on ./test_stat.json
     info('*** Dumping test stats to json file\n')	
-    writeStat(netBuildTime, totalRuleNum)    
+    writeStat(netBuildTime, hostRegistationTime, ruleInstallationTime, totalRuleNum)    
     
     CLI(net)
     net.stop()
