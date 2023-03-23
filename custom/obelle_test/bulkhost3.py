@@ -204,6 +204,8 @@ def myNetwork():
     info('*** Adding links\n')
     for i in range(dpNum):
         net.addLink(r1, dpList[i], i+1, 1)
+        if i < dpNum-1 :
+            net.addLink(dpList[i], dpList[i+1], 1001, 1002)
         linkExecutor.submit(addLink, net, i) 
     linkExecutor.shutdown(wait=True)
 
