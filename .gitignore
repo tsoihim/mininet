@@ -11,4 +11,4 @@ dist
 doc/html
 doc/latex
 trunk
-
+custom/obelle_test/test_stat/*.json
