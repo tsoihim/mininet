@@ -87,6 +87,7 @@ def makeDpData():
 def makeSubnetData():
     data = '{ \
         "gatewayIp": "10.0.0.1", \
+        "gatewayMac": "11:11:11:11:11:11", \
         "subnetCidr": "10.0.0.0/14", \
         "vlanId": 10, \
         "vrrpId": 0, \
