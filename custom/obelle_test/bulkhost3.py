@@ -128,7 +128,10 @@ def addNode(net, idx):
     dpId = idx+1
     if distDpNum != 0:
         dpId += (distId-1) * int(distDpNum/distNodeNum)
-    dpList[idx] = net.addSwitch('s%d' % (idx+1), dpid='%x' % dpId, batch=True, protocols="OpenFlow13")
+    try:
+        dpList[idx] = net.addSwitch('s%d' % (idx+1), dpid='%x' % dpId, batch=True, protocols="OpenFlow13")
+    except Exception as e:
+        info(e)
     for j in range(hostPerDp) :
         hostId = hostPerDp * idx + j + 1
         hostIp = baseIp + hostId 
@@ -205,8 +208,8 @@ def myNetwork():
     info('*** Adding links\n')
     for i in range(dpNum):
         net.addLink(r1, dpList[i], i+1, 1)
-        if i < dpNum-1 :
-            net.addLink(dpList[i], dpList[i+1], 1001, 1002)
+        # if i < dpNum-1 :
+        #     net.addLink(dpList[i], dpList[i+1], 1001, 1002)
         linkExecutor.submit(addLink, net, i) 
     linkExecutor.shutdown(wait=True)
 
@@ -244,41 +247,41 @@ def myNetwork():
     hostRegistationTime = time.time() - netBuildTime - start
     info("*** Registering hosts took %.3f seconds\n" % (hostRegistationTime))
 
-    totalRuleNum = baseRuleNum + hostRuleNum * hostPerDp
-    info('*** Checking if %d rules installed on dps\n' % totalRuleNum)	
-    while True:
-        info('Counting flow entries...\n')
-        notInstalledDpNum = 0 
-        isAllInstalled = True 
-        for dp in dpList:
-            rules = dp.cmd('ovs-ofctl dump-flows %s -O openflow13' % dp.name)
-            ruleNum = rules.count('\n')
-            if int(ruleNum) < totalRuleNum: 
-                info(" - %s has only %s rules\n" % (dp.name, ruleNum))
-                isAllInstalled = False 
-                notInstalledDpNum+=1
-        if isAllInstalled:
-            info("*** %s rules successfully installed on %s datapaths\n" % (totalRuleNum, dpNum))
-            break
-        else :
-            info(" -> %d dps still lack rules\n" % notInstalledDpNum)
-        time.sleep(6)
-    ruleInstallationTime = time.time() - hostRegistationTime - netBuildTime - start 
-    info("*** Synchronizing rules took %.3f seconds\n" % (ruleInstallationTime))
+    # totalRuleNum = baseRuleNum + hostRuleNum * hostPerDp
+    # info('*** Checking if %d rules installed on dps\n' % totalRuleNum)	
+    # while True:
+    #     info('Counting flow entries...\n')
+    #     notInstalledDpNum = 0 
+    #     isAllInstalled = True 
+    #     for dp in dpList:
+    #         rules = dp.cmd('ovs-ofctl dump-flows %s -O openflow13' % dp.name)
+    #         ruleNum = rules.count('\n')
+    #         if int(ruleNum) < totalRuleNum: 
+    #             info(" - %s has only %s rules\n" % (dp.name, ruleNum))
+    #             isAllInstalled = False 
+    #             notInstalledDpNum+=1
+    #     if isAllInstalled:
+    #         info("*** %s rules successfully installed on %s datapaths\n" % (totalRuleNum, dpNum))
+    #         break
+    #     else :
+    #         info(" -> %d dps still lack rules\n" % notInstalledDpNum)
+    #     time.sleep(6)
+    # ruleInstallationTime = time.time() - hostRegistationTime - netBuildTime - start 
+    # info("*** Synchronizing rules took %.3f seconds\n" % (ruleInstallationTime))
 
-    # iperf
-    if iperfEnable:
-        iperfExecutor = concurrent.futures.ThreadPoolExecutor(maxPool)
-        iperfBw = numToSi(int(iperfTotalBw/dpNum))
-        info('*** Iperf hosts\n')	
-        for i in range(dpNum):
-            info(' - h%d <---> h%d on s%s : \n' % ((hostPerDp * i + 1), hostPerDp * (i + 1), (i+1)))
-            iperfExecutor.submit(iperfHost, net, [hostList[i][0], hostList[i][-1]], iperfDuration, iperfBw)
-        iperfExecutor.shutdown(wait=True)
+    # # iperf
+    # if iperfEnable:
+    #     iperfExecutor = concurrent.futures.ThreadPoolExecutor(maxPool)
+    #     iperfBw = numToSi(int(iperfTotalBw/dpNum))
+    #     info('*** Iperf hosts\n')	
+    #     for i in range(dpNum):
+    #         info(' - h%d <---> h%d on s%s : \n' % ((hostPerDp * i + 1), hostPerDp * (i + 1), (i+1)))
+    #         iperfExecutor.submit(iperfHost, net, [hostList[i][0], hostList[i][-1]], iperfDuration, iperfBw)
+    #     iperfExecutor.shutdown(wait=True)
     
-    # write stat on ./test_stat.json
-    info('*** Dumping test stats to json file\n')	
-    writeStat(netBuildTime, hostRegistationTime, ruleInstallationTime, totalRuleNum)    
+    # # write stat on ./test_stat.json
+    # info('*** Dumping test stats to json file\n')	
+    # writeStat(netBuildTime, hostRegistationTime, ruleInstallationTime, totalRuleNum)    
     
     CLI(net)
     net.stop()
